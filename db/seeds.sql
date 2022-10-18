@@ -1,3 +1,5 @@
+/*COMMENTS FOLLOW CSS FORMAT, DONT USE THE KEYBOARD SHORTCUT, IT IS WRONG*/
+
 INSERT INTO departments(dept_name)
 VALUES('Teaching Staff'),
 ('Gryffindor'),
