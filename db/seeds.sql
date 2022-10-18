@@ -32,3 +32,11 @@ VALUES ('Albus','Dumbledore',1,1,NULL),
 ('Pomona','Sprout',3,5,1),
 ('Cedric','Diggory',4,5,15),
 ('Hannah','Abbott',5,5,15);
+
+/*
+INSERT INTO managerNames(manager_name)
+VALUES ('Albuse Dumbledore'),
+('Minerva McGonagall'),
+('Servus Snape'),
+('Filius Flitwick'),
+('Pomona Sprout')*/

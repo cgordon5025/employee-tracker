@@ -18,10 +18,19 @@ CREATE TABLE employees (
   first_name VARCHAR(30) NOT NULL,
   last_name VARCHAR(30) NOT NULL,
   manager_id INT DEFAULT NULL,
-  FOREIGN KEY(manager_id) REFERENCES employees(id),
+  FOREIGN KEY(manager_id) REFERENCES employees(id) ON DELETE SET NULL,
   dept_id INT,
-  FOREIGN KEY(dept_id) REFERENCES departments(id),
+  FOREIGN KEY(dept_id) REFERENCES departments(id) ON DELETE SET NULL,
   role_id INT,
-  FOREIGN KEY(role_id) REFERENCES roles(id)
+  FOREIGN KEY(role_id) REFERENCES roles(id) ON DELETE SET NULL
 );
 
+/*
+CREATE TABLE managerNames (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    manager_name VARCHAR(30) NOT NULL,
+      manager_id INT DEFAULT NULL,
+        FOREIGN KEY(manager_id) REFERENCES employees(id) ON DELETE SET NULL
+)
+
+*/
