@@ -12,7 +12,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 //setting up some arrays
-
+var roleArray = [];
+var deptArray = [];
+var empArray = [];
 var managerArray = ["Albus Dumbledore", "Minerva McGonagall", "Severus Snape", "Filius Flitwick", "Pomona Sprout"];
 
 const db = mysql.createConnection(
@@ -76,19 +78,21 @@ const addEmp = [
     message: "What is the Employee's role?",
     choices: () => {
       db.promise().query('SELECT * FROM roles').then(results =>
+        // console.log("results!")
         results[0].forEach(role =>
           // console.log("myrole" + JSON.stringify(role.role_title)),
-          roleArray.push(role.role_title)),
+          roleArray.push("hello"))
+          // roleArray.push(role.role_title)),
       );
       return roleArray
-      },
+    },
     // getRoles(),//needs to be an updated list including the new role
     name: 'addEmpRole'
   },
   {
     type: 'list',
     message: "Which department does this employee belong to?",
-    choices: "e",
+    choices: ['h','e','l','l','o'],
     name: 'addEmpDept'
   },
   {
@@ -116,7 +120,7 @@ const updateEmp = [
 //need to call all the data down first since it will not be available until I view the info, due to the way I wrote this
 //have int, to grab things from db and then a second function to do the asking
 async function init() {
-  getRoles()
+  // getRoles()
   await callEmps()
   console.log(roleArray)
   var mainMenu = await inquirer.prompt(mainMenuQuest)
@@ -190,17 +194,19 @@ async function callRoles() {
   return db.promise().query('SELECT * FROM roles')
 }
 
-var roleArray = []
 async function getRoles() {
   db.promise().query('SELECT * FROM roles').then(results =>
+    // console.log(results[0])
     results[0].forEach(role =>
-      // console.log("myrole" + JSON.stringify(role.role_title)),
+      // console.log("myrole" + JSON.stringify(role.role_title))
       roleArray.push(role.role_title)),
-    //  console.log(results[0]))
-  );
+    // console.log(roleArray)
+    );
+  console.log(roleArray)
   return roleArray
   // (res => console.log(roleArray))
 }
+// getRoles()
 // db.promise().query('SELECT * FROM roles').then(([rows, fields]) =>
 // console.table(rows.role_title))
 async function callDepts() {
