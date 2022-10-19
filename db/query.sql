@@ -2,7 +2,7 @@
 SELECT employees.id,employees.first_name,employees.last_name,employees.manager_id, roles.role_title, departments.dept_name, roles.salary,
     CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager
 FROM employees
-JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id
+LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id
 JOIN roles ON employees.role_id = roles.id
 JOIN departments on employees.dept_id = departments.id
 ORDER BY employees.id;
