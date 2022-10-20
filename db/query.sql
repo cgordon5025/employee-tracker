@@ -17,4 +17,4 @@ FROM employees
 LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id
 JOIN roles ON employees.role_id = roles.id
 JOIN departments on employees.dept_id = departments.id
-WHERE employees.manager_id = 1;
+WHERE Manager = "Albus Dumblerdore"

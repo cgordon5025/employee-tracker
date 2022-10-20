@@ -24,9 +24,7 @@ const db = mysql.createConnection(
 var roles = [];
 var depts = [];
 var emps = [];
-var managers = [];
-var managersID = [];
-var managerRaw = [];
+
 var empID = [];
 callDownData()
 async function callDownData() {
@@ -54,48 +52,11 @@ async function callDownData() {
         empArray.push(emp)
     }
     ))
-  await db.promise().query("SELECT * FROM employees").then(results =>
-    results[0].forEach(manager => {
-      managersID.push(manager.manager_id)
-    }))
-  console.log("before the next loop")
-  console.log(managersID)
-  // console.log(manager.manager_id)
-  managersID.forEach(managerID => {
-    if (typeof managerID == "number") {
-      db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE id = ?", managerID).then(results => {
-        //think how to iterate and get these values first, transform it outside of the for loop after pushing into array
-        // console.log(results[0])
-        managerRaw = results[0].map(function (obj) {
-          return (`${obj.first_name} ${obj.last_name}`)
-        })
-        // console.log(managerRaw)
-        managers.push(managerRaw)
-      })
-      return managers
-    }
-  }
-  )
-  console.log(managerRaw)
-  console.log("outside of loop")
-  console.log(managersID)
-
-  console.log("MANAGERS")
-  console.log(managers)
-  // var manager = new Set(managerRaw)
-  // console.log(manager)
-  // await db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE manager_id = ?",managersID).then(results =>{
-  //   manager
-  // })
-  // console.log(empID)
-  // console.log(emps)
-  // console.log(managersID)
   init()
 }
 
 async function init() {
-  console.log("MANAGERS RAW")
-  console.log(managerRaw)
+
   var mainMenu = await inquirer.prompt(mainMenuQuest)
   if (mainMenu.mainMenu == 'View All Wizards') {
     //if this method needs to be promise
@@ -151,17 +112,7 @@ async function callRoles() {
 async function callDepts() {
   return db.promise().query('SELECT * FROM departments')
 }
-async function filterbyManager() {
-  var whichManager = await inquirer.prompt(
-    {
-      type: list,
-      message: "Which Manager do you want to filter by?",
-      choices: emp,
-      name: "whichMan"
-    }
-  )
-  return db.promise().query("SELECT employees.id,employees.first_name,employees.last_name,employees.manager_id, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.manager_id = 1;")
-}
+
 //inquirer questions and functions below
 const mainMenuQuest = [
   {
@@ -298,4 +249,46 @@ const updateEmp = async () => {
   await db.promise().query('UPDATE employees SET role_id = ? WHERE employees.first_name = ?', [roleID, firstname[0]])
 
   init()
+}
+async function filterbyManager() {
+  let managers = [];
+  let managersID = [];
+  let data = [];
+  await db.promise().query("SELECT employees.id, employees.first_name, employees.last_name, employees.manager_id FROM employees").then(results =>
+    results[0].forEach(manager => {
+      managersID.push(manager.manager_id)
+      data.push(manager)
+    }))
+
+  // console.log(managersID.length)
+  // console.log(data.length)
+  for (let i = 0; i < data.length; i++) {
+    // console.log(managersID[i])
+    // console.log(data[i].id)
+    if (managersID.includes(data[i].id)) {
+      managers.push(`${data[i].first_name} ${data[i].last_name}`)
+      // console.log("found a manager")
+    }
+    // else { console.log("no manager here") }
+  }
+  // console.log(managers)
+  //ask them who they want to see
+  var whichManager = await inquirer.prompt(
+    {
+      type: 'list',
+      message: "Which Manager do you want to filter by?",
+      choices: managers,
+      name: "whichMan"
+    }
+  )
+  //here we are reversing the search, by looking for the id where the first name = the desired manager's first name 
+  let firstname = whichManager.whichMan.split(' ')
+  await db.promise().query('SELECT id FROM employees WHERE first_name = ?', firstname[0]).then(results =>
+    // console.log(results[0])
+    manID = results[0].map(function (obj) {
+      return obj.id
+    }))
+  // console.log(manID)
+  //this is what we want to return, the final query in which we show them the data!
+  return await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.manager_id = ?", [manID])
 }
