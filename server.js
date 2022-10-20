@@ -170,6 +170,8 @@ const addRole = async () => {
 
 const addEmp = async () => {
   let manager_id;
+  let role_id;
+  let dept_id;
   var empInput = await inquirer.prompt(
     [
       {
@@ -202,12 +204,33 @@ const addEmp = async () => {
       }
     ]
   )
-  temp = empInput.addEmpManager.split(' ');
-  db.promise().query('SELECT id FROM employees WHERE employees.first_name = ?', temp[0]).then(results =>
-    console.log(results[0].id))
-  //   results[0].forEach(id =>
-  // manager_id = id))
+  managerName = empInput.addEmpManager.split(' ');
+  await db.promise().query('SELECT id FROM employees WHERE employees.first_name = ?', managerName[0]).then(results =>
+    // console.log(results[0])
+    manager_id = results[0].map(function (obj) {
+      return obj.id
+    })
+
+    // console.log(manager_id)
+    // console.log(results[0].id)
+  )
+  //We want to grab the numerical value for these The query will not take the actual roles/names/depts, it was their ID numbers
+  await db.promise().query('SELECT id FROM roles WHERE roles.role_title = ?', empInput.addEmpRole).then(results =>
+    // console.log(results[0])
+    role_id = results[0].map(function (obj) {
+      return obj.id
+    })
+  )
+  await db.promise().query('SELECT id FROM departments WHERE departments.dept_name = ?', empInput.addEmpDept).then(results =>
+    // console.log(results[0])
+    dept_id = results[0].map(function (obj) {
+      return obj.id
+    })
+  )
   console.log(manager_id)
-  // let enteredEmp = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', [empInput.addFirstName, empInput.addLastName, empInput.addEmpRole, empInput.addEmpDept, empInput.manager_id])
+  console.log(role_id)
+  console.log(dept_id)
+  //lets add in the person
+  let enteredEmp = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', [empInput.addFirstName, empInput.addLastName, role_id, dept_id, manager_id])
   init()
 }
