@@ -21,4 +21,4 @@ https://www.geeksforgeeks.org/how-to-remove-object-from-array-of-objects-using-j
 N/A
 
 ## Video of Walkthrough
-[Link to Walkthrough]()
+[Link to Walkthrough](https://drive.google.com/drive/folders/1gbhgOBo9ObBT32IE_GZDMpo7dXVcU42I?usp=sharing)
