@@ -9,6 +9,8 @@ Download from my github
 To generate database and tables please run the schema.sql and seeds.sql files. If you wish to change the information from the test code, please maintain the format and syntax the test data provides. Once the database is created you can then run the server.js file. Follow the prompts to either add, remove or view an employee.
 
 ## Credits
+Syntax for sql queries in node
+https://www.tutorialkart.com/nodejs/nodejs-mysql-insert-into/
 
 ## License
 N/A

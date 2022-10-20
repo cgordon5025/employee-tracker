@@ -12,7 +12,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 //setting up some arrays
-
+var empArray = [];
+var roleArray = []
+var deptArray = [];
 var managerArray = ["Albus Dumbledore", "Minerva McGonagall", "Severus Snape", "Filius Flitwick", "Pomona Sprout"];
 
 const db = mysql.createConnection(
@@ -33,6 +35,18 @@ const mainMenuQuest = [
     name: 'mainMenu'
   }
 ];
+const addDept = async () => {
+  var deptInput = await inquirer.prompt(
+    {
+      type: 'input',
+      message: 'What is the name of the department?',
+      name: 'addDept'
+    }
+  )
+  let enteredDept = await db.promise().query('INSERT INTO departments(dept_name) VALUES (?)', [deptInput.addDept] )
+}
+
+addDept()
 const addDepartment = [
   {
     type: 'input',
@@ -51,12 +65,6 @@ const addRole = [
     type: 'input',
     message: 'What is the salary of the role?',
     name: 'addRoleSalary'
-  },
-  {
-    type: 'list',
-    message: "Which department does the role belong to?",
-    choices: ['stuff'],//array of depts, that have been updated
-    name: 'addRoleDept'
   }
 ]
 
@@ -81,7 +89,7 @@ const addEmp = [
           roleArray.push(role.role_title)),
       );
       return roleArray
-      },
+    },
     // getRoles(),//needs to be an updated list including the new role
     name: 'addEmpRole'
   },
@@ -115,10 +123,12 @@ const updateEmp = [
 ]
 //need to call all the data down first since it will not be available until I view the info, due to the way I wrote this
 //have int, to grab things from db and then a second function to do the asking
-async function init() {
+async function callData() {
   getRoles()
-  await callEmps()
-  console.log(roleArray)
+  getEmps()
+  getDepts()
+}
+async function init() {
   var mainMenu = await inquirer.prompt(mainMenuQuest)
   if (mainMenu.mainMenu == 'View All Wizards') {
     //if this method needs to be promise
@@ -126,18 +136,22 @@ async function init() {
       console.table(rows)
     )
     init()
-
-    // console.table(empArray)
-    // db.query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id ORDER BY employees.id;", function (err, results) {
-    //   results.forEach(emp => empArray.push(emp))
-    //   console.table(empArray)
-    // })
   } else if (mainMenu.mainMenu == "Add New Wizard") {
-    var newEmp = await inquirer.prompt(addEmp)
+    await inquirer.prompt(addEmp)
       .then(newEmpInput => {
-        //this is the correct syntax just need to put it in the new functions I create
-        db.query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', newEmpInput.addFirstName, newEmpInput.addLastName, newEmpInput.addEmpRole, newEmpInput.addEmpDept, newEmpInput.addEmpManager)
+        let query = `INSERT INTO employees 
+        (name, address) VALUES ?;`
+        let values =
+          [newEmpInput.addFirstName, newEmpInput.addLastName, newEmpInput.addEmpRole, newEmpInput.addEmpDept, newEmpInput.addEmpManager]
+        db.query(query, [values], (err, rows) => {
+          if (err) throw err;
+          console.log("All Rows Inserted");
+        })
       })
+
+    //this is the correct syntax just need to put it in the new functions I create
+    // db.query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', newEmpInput.addFirstName, newEmpInput.addLastName, newEmpInput.addEmpRole, newEmpInput.addEmpDept, newEmpInput.addEmpManager)
+
 
   } else if (mainMenu.mainMenu == "Update Wizard Role") {
     //somehting along the lines of based off name, selecting the individual by the name, and translating that to their unique ID
@@ -146,30 +160,39 @@ async function init() {
     await callRoles().then(([rows, fields]) =>
       console.table(rows)
     )
-    // db.query('SELECT * FROM roles', function (err, results) {
-    //   results.forEach(role => roleArray.push(role))
-    //   console.table(roleArray)
     init()
   } else if (mainMenu.mainMenu == "Add Role") {
-    var newRole = await inquirer.prompt(addRole)
+    await inquirer.prompt(addRole)
+      .then(newRoleInput => {
+        let query = `INSERT INTO employees (role_title, salary) VALUES ?;`
+        let values =
+          [newRoleInput.addRoleName, newRoleInput.addRoleSalary]
+        db.query(query, [values], (err, rows) => {
+          if (err) throw err;
+          console.log("All Rows Inserted");
+        })
+      })
+    // .then(newRoleInput => {
+    //   db.query('INSERT INTO roles (role_title, salary) VALUES (?,?)', newRoleInput.addRoleName, newRoleInput.addRoleSalary)
+    // })
 
   } else if (mainMenu.mainMenu == "View All Departments") {
     await callDepts().then(([rows, fields]) =>
       console.table(rows)
     )
-    // db.query("SELECT * FROM departments", function (err, results) {
-    //   results.forEach(dept => deptArray.push(dept))
-    //   console.table(deptArray)
     init()
 
   } else if (mainMenu.mainMenu == "Add Department") {
-    var newDept = await inquirer.prompt(addDepartment)
+    await inquirer.prompt(addDepartment)
+      .then(newDeptInput => {
+        db.query('INSERT INTO departments (dept_name)', newDeptInput.addDept)
+      })
 
   } else if (mainMenu.mainMenu == "Quit") {
-
+    return "Goodbye!"
   }
 }
-init()
+// init()
 app.use((req, res) => {
   res.status(404).end();
 });
@@ -204,7 +227,16 @@ async function getRoles() {
 // db.promise().query('SELECT * FROM roles').then(([rows, fields]) =>
 // console.table(rows.role_title))
 async function callDepts() {
-  return db.promise().query('SELECT * FROM departments')
+  let dept = await db.promise().query('SELECT * FROM departments')
+  dept.map((deptOpt) => {
+    console.log(deptOpt.dept_name)
+    return {
+      name: deptOpt.dept_name
+    }
+  })
 
 }
-
+// callDepts()
+async function getEmps() {
+  return db.promise().query('SELECT * FROM employees')
+}
