@@ -11,11 +11,6 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-//setting up some arrays
-// getEmps()
-// getDepts()
-var managerArray = ["Albus Dumbledore", "Minerva McGonagall", "Severus Snape", "Filius Flitwick", "Pomona Sprout"];
-
 const db = mysql.createConnection(
   {
     host: 'localhost',
@@ -29,6 +24,9 @@ const db = mysql.createConnection(
 var roles = [];
 var depts = [];
 var emps = [];
+var managers = [];
+var managersID = [];
+var managerRaw = [];
 var empID = [];
 callDownData()
 async function callDownData() {
@@ -52,13 +50,34 @@ async function callDownData() {
   await db.promise().query('SELECT * FROM employees').then(results =>
     results[0].forEach(emp => {
       // console.log("myrole" + JSON.stringify(role.role_title)),
-      empID.push(emp.id)
       emps.push(`${emp.first_name} ${emp.last_name}`),
         empArray.push(emp)
     }
     ))
-  console.log(empID)
-  console.log(emps)
+  await db.promise().query("SELECT * FROM employees").then(results =>
+    results[0].forEach(manager => {
+      // console.log(manager.manager_id)
+      if ((typeof manager.manager_id == "number")) {
+        db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE id = ?", manager.manager_id).then(results => {
+          //think how to iterate and get these values first, transform it outside of the for loop after pushing into array
+          managerRaw = results[0].map(function (obj) {
+            return (`${obj.first_name} ${obj.last_name}`)
+          })
+          // console.log(managerRaw)
+          // managers.push(managerRaw)
+        })
+      }
+    })
+  )
+  console.log(managerRaw)
+  var manager = new Set(managerRaw)
+  console.log(manager)
+  // await db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE manager_id = ?",managersID).then(results =>{
+  //   manager
+  // })
+  // console.log(empID)
+  // console.log(emps)
+  // console.log(managersID)
   init()
 }
 async function init() {
@@ -88,7 +107,13 @@ async function init() {
     init()
   } else if (mainMenu.mainMenu == "Add Department") {
     addDept()
-  } else if (mainMenu.mainMenu == "Quit") {
+  } else if (mainMenu.mainMenu == "View Employees by Manager") {
+    filterbyManager().then(([rows, fields]) =>
+      console.table(rows)
+    )
+    init()
+  }
+  else if (mainMenu.mainMenu == "Quit") {
     return "Goodbye!"
   }
 }
@@ -111,12 +136,23 @@ async function callRoles() {
 async function callDepts() {
   return db.promise().query('SELECT * FROM departments')
 }
+async function filterbyManager() {
+  var whichManager = await inquirer.prompt(
+    {
+      type: list,
+      message: "Which Manager do you want to filter by?",
+      choices: emp,
+      name: "whichMan"
+    }
+  )
+  return db.promise().query("SELECT employees.id,employees.first_name,employees.last_name,employees.manager_id, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.manager_id = 1;")
+}
 //inquirer questions and functions below
 const mainMenuQuest = [
   {
     type: 'list',
     message: "What would you like to do?",
-    choices: ["View All Wizards", "Add New Wizard", "Update Wizard Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "Quit"],
+    choices: ["View All Wizards", "Add New Wizard", "Update Wizard Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "View Employees by Manager", "Quit"],
     name: 'mainMenu'
   }
 ];
@@ -238,13 +274,13 @@ const updateEmp = async () => {
     ]
   )
   var firstname = refreshEmp.updateEmpWho.split(' ')
-await db.promise().query('SELECT id FROM roles WHERE role_title = ?',refreshEmp.updateEmpRole).then(results =>
-  // console.log(results[0])
-  roleID = results[0].map(function (obj) {
-    return obj.id
-  }))
+  await db.promise().query('SELECT id FROM roles WHERE role_title = ?', refreshEmp.updateEmpRole).then(results =>
+    // console.log(results[0])
+    roleID = results[0].map(function (obj) {
+      return obj.id
+    }))
   console.log(roleID)
   await db.promise().query('UPDATE employees SET role_id = ? WHERE employees.first_name = ?', [roleID, firstname[0]])
- 
+
   init()
 }
