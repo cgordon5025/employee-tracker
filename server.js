@@ -27,9 +27,6 @@ const db = mysql.createConnection(
 );
 //lets call down the data to use when selecting the info
 
-
-
-
 const updateEmp = [
   {
     type: 'list',
@@ -45,10 +42,12 @@ const updateEmp = [
   }
 ]
 //establishing this so I can call it in the inquirer questions
-const roles = [];
-const depts = [];
-const emps = [];
-async function init() {
+var roles = [];
+var depts = [];
+var emps = [];
+var empID = [];
+callDownData()
+async function callDownData() {
   let roleArray = [];
   let deptArray = [];
   let empArray = []
@@ -69,11 +68,16 @@ async function init() {
   await db.promise().query('SELECT * FROM employees').then(results =>
     results[0].forEach(emp => {
       // console.log("myrole" + JSON.stringify(role.role_title)),
+      empID.push(emp.id)
       emps.push(`${emp.first_name} ${emp.last_name}`),
         empArray.push(emp)
     }
     ))
-
+  console.log(empID)
+  console.log(emps)
+  init()
+}
+async function init() {
   var mainMenu = await inquirer.prompt(mainMenuQuest)
   if (mainMenu.mainMenu == 'View All Wizards') {
     //if this method needs to be promise
@@ -105,7 +109,6 @@ async function init() {
     return "Goodbye!"
   }
 }
-init()
 app.use((req, res) => {
   res.status(404).end();
 });
@@ -125,19 +128,7 @@ async function callRoles() {
 async function callDepts() {
   return db.promise().query('SELECT * FROM departments')
 }
-
-async function getRoles() {
-  let roleArray = [];
-  await db.promise().query('SELECT * FROM roles').then(results =>
-    results[0].forEach(role =>
-      // console.log("myrole" + JSON.stringify(role.role_title)),
-      roles.push(role.role_title),
-      roleArray.push(role.role_title)),
-    //  console.log(results[0]))
-  );
-  return roleArray
-  // (res => console.log(roleArray))
-}
+//inquirer questions and functions below
 const mainMenuQuest = [
   {
     type: 'list',
@@ -172,11 +163,13 @@ const addRole = async () => {
     }
   ]
   )
+  //take the info and place it in the db
   let enteredRole = await db.promise().query('INSERT INTO roles (role_title, salary) VALUES (?,?)', [roleInput.addRoleName, roleInput.addRoleSalary])
   init()
 }
 
 const addEmp = async () => {
+  let manager_id;
   var empInput = await inquirer.prompt(
     [
       {
@@ -209,7 +202,12 @@ const addEmp = async () => {
       }
     ]
   )
-
-  let enteredEmp = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', [empInput.addFireName, empInput.addLastName, empInput.addEmpRole, empInput.addEmpDept, empInput.addEmpManager])
+  temp = empInput.addEmpManager.split(' ');
+  db.promise().query('SELECT id FROM employees WHERE employees.first_name = ?', temp[0]).then(results =>
+    console.log(results[0].id))
+  //   results[0].forEach(id =>
+  // manager_id = id))
+  console.log(manager_id)
+  // let enteredEmp = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', [empInput.addFirstName, empInput.addLastName, empInput.addEmpRole, empInput.addEmpDept, empInput.manager_id])
   init()
 }
