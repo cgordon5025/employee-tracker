@@ -25,22 +25,6 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the employee_db database.`)
 );
-//lets call down the data to use when selecting the info
-
-const updateEmp = [
-  {
-    type: 'list',
-    message: "Which employee's role do you want to update?",
-    choices: ['people'],//list all the employees we have,mus thave the added people
-    name: 'updateEmpWho'
-  },
-  {
-    type: 'list',
-    message: "Which role do you want to assign the selected employee?",
-    choices: ['list of roles'],
-    name: 'updateEmpRole'
-  }
-]
 //establishing this so I can call it in the inquirer questions
 var roles = [];
 var depts = [];
@@ -88,7 +72,7 @@ async function init() {
   } else if (mainMenu.mainMenu == "Add New Wizard") {
     addEmp()
   } else if (mainMenu.mainMenu == "Update Wizard Role") {
-    //somehting along the lines of based off name, selecting the individual by the name, and translating that to their unique ID
+    updateEmp()
   } else if (mainMenu.mainMenu == "View All Roles") {
     ///due to the nature of the data, the employees is an intermediary between roles and dept, so the roles will have no dept_id
     await callRoles().then(([rows, fields]) =>
@@ -102,7 +86,6 @@ async function init() {
       console.table(rows)
     )
     init()
-
   } else if (mainMenu.mainMenu == "Add Department") {
     addDept()
   } else if (mainMenu.mainMenu == "Quit") {
@@ -232,5 +215,36 @@ const addEmp = async () => {
   console.log(dept_id)
   //lets add in the person
   let enteredEmp = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', [empInput.addFirstName, empInput.addLastName, role_id, dept_id, manager_id])
+  init()
+}
+
+const updateEmp = async () => {
+  let empID;
+  let roleID;
+  var refreshEmp = await inquirer.prompt(
+    [
+      {
+        type: 'list',
+        message: "Which employee's role do you want to update?",
+        choices: emps,
+        name: 'updateEmpWho'
+      },
+      {
+        type: 'list',
+        message: "Which role do you want to assign the selected employee?",
+        choices: roles,
+        name: 'updateEmpRole'
+      }
+    ]
+  )
+  var firstname = refreshEmp.updateEmpWho.split(' ')
+await db.promise().query('SELECT id FROM roles WHERE role_title = ?',refreshEmp.updateEmpRole).then(results =>
+  // console.log(results[0])
+  roleID = results[0].map(function (obj) {
+    return obj.id
+  }))
+  console.log(roleID)
+  await db.promise().query('UPDATE employees SET role_id = ? WHERE employees.first_name = ?', [roleID, firstname[0]])
+ 
   init()
 }

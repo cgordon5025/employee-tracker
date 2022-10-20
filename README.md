@@ -12,6 +12,9 @@ To generate database and tables please run the schema.sql and seeds.sql files. I
 Syntax for sql queries in node
 https://www.tutorialkart.com/nodejs/nodejs-mysql-insert-into/
 
+Removing ID from the array of objects solution found here
+https://www.geeksforgeeks.org/how-to-remove-object-from-array-of-objects-using-javascript/
+
 ## License
 N/A
 
