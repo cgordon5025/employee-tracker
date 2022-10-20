@@ -11,10 +11,18 @@ ORDER BY employees.id;*/
 
  /*SELECT id FROM employees WHERE employees.first_name = "MINERVA"*/
 
- SELECT employees.id,employees.first_name,employees.last_name,employees.manager_id, roles.role_title, departments.dept_name, roles.salary,
+/* SELECT employees.id,employees.first_name,employees.last_name,employees.manager_id, roles.role_title, departments.dept_name, roles.salary,
     CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager
 FROM employees
 LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id
 JOIN roles ON employees.role_id = roles.id
 JOIN departments on employees.dept_id = departments.id
-WHERE Manager = "Albus Dumblerdore"
+WHERE Manager = "Albus Dumblerdore"*/
+/*ADDING THE BUDGETS OF EACH DEPARTMENT*/
+
+SELECT roles.role_title, departments.dept_name, roles.salary,
+    SUM(roles.salary) AS utilized_budget
+FROM employees
+JOIN roles ON employees.role_id = roles.id
+JOIN departments on employees.dept_id = departments.id
+GROUP BY departments.dept_name;

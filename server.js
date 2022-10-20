@@ -28,76 +28,66 @@ var emps = [];
 var empID = [];
 callDownData()
 async function callDownData() {
+  let rolesRaw = [];
+  let deptsRaw = [];
+  let empsRaw = [];
   let roleArray = [];
   let deptArray = [];
   let empArray = []
   await db.promise().query('SELECT * FROM roles').then(results =>
     results[0].forEach(role => {
       // console.log("myrole" + JSON.stringify(role.role_title)),
-      roles.push(role.role_title),
+      rolesRaw.push(role.role_title),
         roleArray.push(role)
     }
     ))
   await db.promise().query('SELECT * FROM departments').then(results =>
     results[0].forEach(dept => {
       // console.log("myrole" + JSON.stringify(role.role_title)),
-      depts.push(dept.dept_name),
+      deptsRaw.push(dept.dept_name),
         deptArray.push(dept)
     }
     ))
   await db.promise().query('SELECT * FROM employees').then(results =>
     results[0].forEach(emp => {
       // console.log("myrole" + JSON.stringify(role.role_title)),
-      emps.push(`${emp.first_name} ${emp.last_name}`),
+      empsRaw.push(`${emp.first_name} ${emp.last_name}`),
         empArray.push(emp)
     }
     ))
+  roles = rolesRaw
+  depts = deptsRaw
+  emps = empsRaw
   init()
 }
+
 
 async function init() {
 
   var mainMenu = await inquirer.prompt(mainMenuQuest)
   if (mainMenu.mainMenu == 'View All Wizards') {
     //if this method needs to be promise
-    await callEmps().then(([rows, fields]) =>
-      console.table(rows)
-    )
-    init()
+    callEmps()
   } else if (mainMenu.mainMenu == "Add New Wizard") {
     addEmp()
   } else if (mainMenu.mainMenu == "Update Wizard Role") {
     updateEmp()
   } else if (mainMenu.mainMenu == "View All Roles") {
     ///due to the nature of the data, the employees is an intermediary between roles and dept, so the roles will have no dept_id
-    await callRoles().then(([rows, fields]) =>
-      console.table(rows)
-    )
-    init()
+    callRoles()
   } else if (mainMenu.mainMenu == "Add Role") {
     addRole()
   } else if (mainMenu.mainMenu == "View All Departments") {
-    await callDepts().then(([rows, fields]) =>
-      console.table(rows)
-    )
-    init()
+    callDepts()
   } else if (mainMenu.mainMenu == "Add Department") {
     addDept()
   } else if (mainMenu.mainMenu == "View Employees by Manager") {
-    filterbyManager().then(([rows, fields]) =>
-      console.table(rows)
-    )
-  
+    filterbyManager()
   } else if (mainMenu.mainMenu == "View Employees by Role") {
     filterbyRole()
-  
-    // init()
-  }else if (mainMenu.mainMenu == "View Employees by Department") {
-    filterbyDept().then(([rows, fields]) =>
-      console.table(rows)
-    )
-    init()
-  }else if (mainMenu.mainMenu == "Quit") {
+  } else if (mainMenu.mainMenu == "View Employees by Department") {
+    filterbyDept()
+  } else if (mainMenu.mainMenu == "Quit") {
     return "goodbye"
   }
 }
@@ -112,13 +102,21 @@ app.listen(PORT, () => {
 
 //all functions
 async function callEmps() {
-  return db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id ORDER BY employees.id;")
+  await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id ORDER BY employees.id;").then(([rows, fields]) =>
+    console.table('\n', rows))
+  callDownData()
 }
 async function callRoles() {
-  return db.promise().query('SELECT * FROM roles')
+  await db.promise().query('SELECT * FROM roles').then(([rows, fields]) =>
+    console.table('\n', rows)
+  )
+  callDownData()
 }
 async function callDepts() {
-  return db.promise().query('SELECT * FROM departments')
+  await db.promise().query('SELECT * FROM departments').then(([rows, fields]) =>
+    console.table('\n', rows)
+  )
+  callDownData()
 }
 
 //inquirer questions and functions below
@@ -139,7 +137,7 @@ const addDept = async () => {
     }
   )
   let enteredDept = await db.promise().query('INSERT INTO departments(dept_name) VALUES (?)', [deptInput.addDept])
-  init()
+  callDownData()
 }
 
 const addRole = async () => {
@@ -158,10 +156,11 @@ const addRole = async () => {
   )
   //take the info and place it in the db
   let enteredRole = await db.promise().query('INSERT INTO roles (role_title, salary) VALUES (?,?)', [roleInput.addRoleName, roleInput.addRoleSalary])
-  init()
+  callDownData()
 }
 
 const addEmp = async () => {
+
   let manager_id;
   let role_id;
   let dept_id;
@@ -220,12 +219,12 @@ const addEmp = async () => {
       return obj.id
     })
   )
-  console.log(manager_id)
-  console.log(role_id)
-  console.log(dept_id)
+  // console.log(manager_id)
+  // console.log(role_id)
+  // console.log(dept_id)
   //lets add in the person
   let enteredEmp = await db.promise().query('INSERT INTO employees (first_name, last_name, role_id,dept_id,manager_id) VALUES (?,?,?,?,?)', [empInput.addFirstName, empInput.addLastName, role_id, dept_id, manager_id])
-  init()
+  callDownData()
 }
 
 const updateEmp = async () => {
@@ -253,10 +252,10 @@ const updateEmp = async () => {
     roleID = results[0].map(function (obj) {
       return obj.id
     }))
-  console.log(roleID)
+  // console.log(roleID)
   await db.promise().query('UPDATE employees SET role_id = ? WHERE employees.first_name = ?', [roleID, firstname[0]])
 
-  init()
+  callDownData()
 }
 async function filterbyManager() {
   let managers = [];
@@ -298,7 +297,10 @@ async function filterbyManager() {
     }))
   // console.log(manID)
   //this is what we want to return, the final query in which we show them the data!
-  return await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.manager_id = ?", [manID])
+  await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.manager_id = ?", [manID]).then(([rows, fields]) =>
+    console.table('\n', rows)
+  )
+  callDownData()
 }
 
 async function filterbyRole() {
@@ -329,12 +331,13 @@ async function filterbyRole() {
     }))
   //this is what we want to return, the final query in which we show them the data!
   await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.role_id = ?", [roleID]).then(([rows, fields]) =>
-  console.table('\n',rows)
-)
-init()
+    console.table('\n', rows)
+  )
+  callDownData()
+
 }
 
-async function filterbyDept(){
+async function filterbyDept() {
   let depts = [];
   let deptID = [];
   let data = [];
@@ -346,7 +349,7 @@ async function filterbyDept(){
 
   // console.log(data)
   //ask them who they want to see
-  var whichDept= await inquirer.prompt(
+  var whichDept = await inquirer.prompt(
     {
       type: 'list',
       message: "Which department do you want to filter by?",
@@ -361,7 +364,8 @@ async function filterbyDept(){
       return obj.id
     }))
   //this is what we want to return, the final query in which we show them the data!
-  return await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.dept_id = ?", [deptID])
-
-  // init()
+  await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.dept_id = ?", [deptID]).then(([rows, fields]) =>
+    console.table('\n', rows)
+  )
+  callDownData()
 }

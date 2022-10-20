@@ -4,7 +4,7 @@ INSERT INTO departments(dept_name)
 VALUES('Teaching Staff'),
 ('Gryffindor'),
 ('Slytherin'),
-('Raveclaw'),
+('Ravenclaw'),
 ('Hufflepuff');
 
 INSERT INTO roles(role_title, salary)

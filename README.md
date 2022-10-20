@@ -6,7 +6,9 @@ This is an employee tracker designed to show all the employees, what role they h
 Download from my github
 
 ## Usage
-To generate database and tables please run the schema.sql and seeds.sql files. If you wish to change the information from the test code, please maintain the format and syntax the test data provides. Once the database is created you can then run the server.js file. Follow the prompts to either add, remove or view an employee.
+To generate database and tables please run the schema.sql and seeds.sql files. If you wish to change the information from the test code, please maintain the format and syntax the test data provides. Once the database is created you can then run the server.js file. Follow the prompts to either add, view an employee. You can also filter employyes based off department, role and manager. 
+
+To use with your own data, feel free to change the prompt message's, and variable names, but be sure to make it consistent!
 
 ## Credits
 Syntax for sql queries in node
