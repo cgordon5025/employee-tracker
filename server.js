@@ -56,22 +56,34 @@ async function callDownData() {
     ))
   await db.promise().query("SELECT * FROM employees").then(results =>
     results[0].forEach(manager => {
-      // console.log(manager.manager_id)
-      if ((typeof manager.manager_id == "number")) {
-        db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE id = ?", manager.manager_id).then(results => {
-          //think how to iterate and get these values first, transform it outside of the for loop after pushing into array
-          managerRaw = results[0].map(function (obj) {
-            return (`${obj.first_name} ${obj.last_name}`)
-          })
-          // console.log(managerRaw)
-          // managers.push(managerRaw)
+      managersID.push(manager.manager_id)
+    }))
+  console.log("before the next loop")
+  console.log(managersID)
+  // console.log(manager.manager_id)
+  managersID.forEach(managerID => {
+    if (typeof managerID == "number") {
+      db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE id = ?", managerID).then(results => {
+        //think how to iterate and get these values first, transform it outside of the for loop after pushing into array
+        // console.log(results[0])
+        managerRaw = results[0].map(function (obj) {
+          return (`${obj.first_name} ${obj.last_name}`)
         })
-      }
-    })
+        // console.log(managerRaw)
+        managers.push(managerRaw)
+      })
+      return managers
+    }
+  }
   )
   console.log(managerRaw)
-  var manager = new Set(managerRaw)
-  console.log(manager)
+  console.log("outside of loop")
+  console.log(managersID)
+
+  console.log("MANAGERS")
+  console.log(managers)
+  // var manager = new Set(managerRaw)
+  // console.log(manager)
   // await db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE manager_id = ?",managersID).then(results =>{
   //   manager
   // })
@@ -80,7 +92,10 @@ async function callDownData() {
   // console.log(managersID)
   init()
 }
+
 async function init() {
+  console.log("MANAGERS RAW")
+  console.log(managerRaw)
   var mainMenu = await inquirer.prompt(mainMenuQuest)
   if (mainMenu.mainMenu == 'View All Wizards') {
     //if this method needs to be promise

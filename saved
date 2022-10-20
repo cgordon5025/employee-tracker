@@ -9,3 +9,22 @@ var arr = myObj.map(function(obj) {
 console.log(arr)
 console.log("next")
 console.log(Object.values(myObj))
+
+
+// await db.promise().query("SELECT * FROM employees").then(results =>
+  //   results[0].forEach(manager => {
+  //     managersID.push(manager.manager_id)
+  //     // console.log(manager.manager_id)
+  //     if ((typeof manager.manager_id == "number")) {
+  //       db.promise().query("SELECT employees.first_name, employees.last_name FROM employees WHERE id = ?", manager.manager_id).then(results => {
+  //         //think how to iterate and get these values first, transform it outside of the for loop after pushing into array
+  //         // console.log(results[0])
+  //         managerRaw = results[0].map(function (obj) {
+  //           return (`${obj.first_name} ${obj.last_name}`)
+  //         })
+  //         // console.log(managerRaw)
+  //         managers.push(managerRaw)
+  //         console.log(managers)
+  //       })
+  //     }
+  //   })
