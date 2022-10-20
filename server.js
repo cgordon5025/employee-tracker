@@ -87,10 +87,18 @@ async function init() {
     filterbyManager().then(([rows, fields]) =>
       console.table(rows)
     )
+  
+  } else if (mainMenu.mainMenu == "View Employees by Role") {
+    filterbyRole()
+  
+    // init()
+  }else if (mainMenu.mainMenu == "View Employees by Department") {
+    filterbyDept().then(([rows, fields]) =>
+      console.table(rows)
+    )
     init()
-  }
-  else if (mainMenu.mainMenu == "Quit") {
-    return "Goodbye!"
+  }else if (mainMenu.mainMenu == "Quit") {
+    return "goodbye"
   }
 }
 app.use((req, res) => {
@@ -118,7 +126,7 @@ const mainMenuQuest = [
   {
     type: 'list',
     message: "What would you like to do?",
-    choices: ["View All Wizards", "Add New Wizard", "Update Wizard Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "View Employees by Manager", "Quit"],
+    choices: ["View All Wizards", "Add New Wizard", "Update Wizard Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "View Employees by Manager", "View Employees by Role", "View Employees by Department", "Quit"],
     name: 'mainMenu'
   }
 ];
@@ -291,4 +299,69 @@ async function filterbyManager() {
   // console.log(manID)
   //this is what we want to return, the final query in which we show them the data!
   return await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.manager_id = ?", [manID])
+}
+
+async function filterbyRole() {
+  let roles = [];
+  let roleID = [];
+  let data = [];
+  await db.promise().query("SELECT * FROM roles").then(results =>
+    results[0].forEach(role => {
+      roles.push(role.role_title)
+      data.push(role)
+    }))
+
+  // console.log(data)
+  //ask them who they want to see
+  var whichRole = await inquirer.prompt(
+    {
+      type: 'list',
+      message: "Which role do you want to filter by?",
+      choices: roles,
+      name: "whichRole"
+    }
+  )
+  //here we are reversing the search, by looking for the id where the first name = the desired manager's first name 
+  await db.promise().query('SELECT id FROM roles WHERE role_title = ?', whichRole.whichRole).then(results =>
+    // console.log(results[0])
+    roleID = results[0].map(function (obj) {
+      return obj.id
+    }))
+  //this is what we want to return, the final query in which we show them the data!
+  await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.role_id = ?", [roleID]).then(([rows, fields]) =>
+  console.table('\n',rows)
+)
+init()
+}
+
+async function filterbyDept(){
+  let depts = [];
+  let deptID = [];
+  let data = [];
+  await db.promise().query("SELECT * FROM departments").then(results =>
+    results[0].forEach(dept => {
+      depts.push(dept.dept_name)
+      data.push(dept)
+    }))
+
+  // console.log(data)
+  //ask them who they want to see
+  var whichDept= await inquirer.prompt(
+    {
+      type: 'list',
+      message: "Which department do you want to filter by?",
+      choices: depts,
+      name: "whichDept"
+    }
+  )
+  //here we are reversing the search, by looking for the id where the first name = the desired manager's first name 
+  await db.promise().query('SELECT id FROM departments WHERE dept_name = ?', whichDept.whichDept).then(results =>
+    // console.log(results[0])
+    deptID = results[0].map(function (obj) {
+      return obj.id
+    }))
+  //this is what we want to return, the final query in which we show them the data!
+  return await db.promise().query("SELECT employees.id,employees.first_name,employees.last_name, roles.role_title, departments.dept_name, roles.salary, CONCAT (ManagerName.first_name,' ', ManagerName.last_name) AS Manager FROM employees LEFT JOIN employees AS ManagerName ON employees.manager_id = ManagerName.id JOIN roles ON employees.role_id = roles.id JOIN departments on employees.dept_id = departments.id WHERE employees.dept_id = ?", [deptID])
+
+  // init()
 }
